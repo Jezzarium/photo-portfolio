@@ -29,7 +29,9 @@ export const springs = {
 	/** Photos moving between views. ~1% overshoot. */
 	hero: spring(0.38, 0.82),
 	/** Small UI movements: hovers, presses, captions, grid entrance. ~2% overshoot. */
-	ui: spring(0.3, 0.78)
+	ui: spring(0.3, 0.78),
+	/** Small elements popping into view, like the back button. ~10% overshoot. */
+	pop: spring(0.24, 0.62)
 };
 
 /** The springs as CSS custom properties, e.g. `var(--spring-hero)` and `var(--spring-hero-duration)`. */

@@ -347,9 +347,6 @@
 	</div>
 
 	<aside bind:this={aside}>
-		<!-- svelte-ignore a11y_autofocus -->
-		<a class="close" href={close} data-sveltekit-reset="false" autofocus>Close</a>
-
 		<div class="captions">
 			{#key photo.id}
 				<div class="caption" style:--dx="{dir * 12}px" style:--dy="{dir ? 0 : 8}px" out:fade={{ duration: reduced() ? 0 : 120 }}>
@@ -448,16 +445,6 @@
 		padding: 40px 40px 40px 0;
 	}
 
-	.close {
-		align-self: flex-end;
-		font-size: 13px;
-		color: var(--muted);
-	}
-
-	.close:hover {
-		color: var(--fg);
-	}
-
 	/* The outgoing caption fades out in the same spot the new one drifts into. */
 	.captions {
 		display: grid;
@@ -529,13 +516,6 @@
 
 		aside {
 			padding: 0 var(--gutter) 24px;
-		}
-
-		.close {
-			position: absolute;
-			z-index: 2;
-			top: 16px;
-			right: var(--gutter);
 		}
 
 		nav {

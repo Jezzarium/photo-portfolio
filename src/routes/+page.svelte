@@ -1,6 +1,5 @@
 <script lang="ts">
 	import { reveal, sizes, src, srcset } from '#lib/images.ts';
-	import { morph } from '#lib/morph.svelte.ts';
 
 	let { data } = $props();
 </script>
@@ -14,10 +13,9 @@
 <ul class="trips">
 	{#each data.trips as trip, i (trip.slug)}
 		{@const cover = trip.photos.find((p) => p.id === trip.cover) ?? trip.photos[0]}
-		{@const morphing = morph.trip === trip.slug}
 		<li>
 			<a href="/{trip.slug}">
-				<div class="frame" style:background={cover.color} style:view-transition-name={morphing ? 'hero' : null}>
+				<div class="frame" style:background={cover.color}>
 					<img
 						class="fade"
 						use:reveal
@@ -62,8 +60,18 @@
 	}
 
 	.frame {
+		position: relative;
 		aspect-ratio: 4 / 5;
 		overflow: hidden;
+	}
+
+	/* Bottom scrim so the white trip name stays readable on any photo. */
+	.frame::after {
+		content: '';
+		position: absolute;
+		inset: auto 0 0;
+		height: 120px;
+		background: linear-gradient(transparent, rgb(0 0 0 / 0.4));
 	}
 
 	/* Specific enough to beat the global `.js img.fade` transition, which only covers opacity. */
@@ -87,8 +95,7 @@
 		display: flex;
 		justify-content: space-between;
 		align-items: baseline;
-		padding: 48px 18px 16px;
-		background: linear-gradient(transparent, rgb(0 0 0 / 0.4));
+		padding: 0 18px 16px;
 		pointer-events: none;
 	}
 

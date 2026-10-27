@@ -9,6 +9,11 @@
 
 	let { data, children } = $props();
 
+	/** Hidden while a view transition runs, so it is never captured in a snapshot: it keeps its live
+	 *  blur and the morphing photo can't cover it. It pops out before the snapshot and springs back after. */
+	let backHidden = $state(false);
+	const BACK_OUT = 80;
+
 	onNavigate(async (navigation) => {
 		if (!document.startViewTransition) return;
 		if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
@@ -19,19 +24,21 @@
 		// Photo -> photo pages inside the viewer itself (see the photo route), so no morph.
 		if (from.photo && to.photo && from.trip === to.trip) return;
 
-		// Catalogue <-> trip morphs the cover; trip <-> photo morphs the opened photo.
+		// Trip <-> photo morphs the opened photo; catalogue <-> trip is a plain crossfade.
 		const trip = data.trips.find((t) => t.slug === (to.trip ?? from.trip));
-		const photoId = to.photo ?? from.photo ?? trip?.cover;
-		const photo = trip?.photos.find((p) => p.id === photoId);
-		morph.trip = trip?.slug;
+		const photo = trip?.photos.find((p) => p.id === (to.photo ?? from.photo));
 		morph.photo = photo?.id;
+		backHidden = true;
 		await tick();
 
-		// Have the destination image decoded before the browser snapshots it.
-		if (trip && photo) {
-			const size = to.photo ? sizes.viewer : to.trip ? sizes.thumb(photo) : sizes.card(photo);
-			await Promise.race([preload(srcset(trip, photo), size), new Promise((r) => setTimeout(r, 300))]);
-		}
+		// Have the destination image decoded, and the back button out of the way, before the browser snapshots.
+		const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));
+		await Promise.all([
+			trip && photo
+				? Promise.race([preload(srcset(trip, photo), to.photo ? sizes.viewer : sizes.thumb(photo)), wait(300)])
+				: null,
+			from.trip ? wait(BACK_OUT) : null
+		]);
 
 		return new Promise((resolve) => {
 			const transition = document.startViewTransition(async () => {
@@ -39,7 +46,8 @@
 				await navigation.complete;
 			});
 			transition.finished.finally(() => {
-				morph.trip = morph.photo = undefined;
+				morph.photo = undefined;
+				requestAnimationFrame(() => (backHidden = false));
 			});
 		});
 	});
@@ -49,8 +57,19 @@
 	{@html `<style>${springCSS}</style>`}
 </svelte:head>
 
+<!-- Firefox ignores -webkit-user-drag, so stop image and link drags here too. -->
+<svelte:document ondragstart={(e) => e.preventDefault()} />
+
+<!-- One back button for every level: an open photo goes back to its trip, a trip to the catalogue. -->
 {#if page.params.trip}
-	<a class="back" href="/" aria-label="All trips">
+	<a
+		class="round-button back"
+		class:hidden={backHidden}
+		style:--out="{BACK_OUT}ms"
+		href={page.params.photo ? `/${page.params.trip}` : '/'}
+		data-sveltekit-reset={page.params.photo ? 'false' : null}
+		aria-label={page.params.photo ? 'Close' : 'All trips'}
+	>
 		<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7" /></svg>
 	</a>
 {/if}
@@ -72,43 +91,19 @@
 		position: fixed;
 		top: 16px;
 		left: var(--gutter);
-		z-index: 10;
-		display: grid;
-		place-items: center;
-		width: 40px;
-		height: 40px;
-		border-radius: 50%;
-		background: color-mix(in oklab, var(--bg) 72%, transparent);
-		backdrop-filter: blur(16px) saturate(1.6);
-		-webkit-backdrop-filter: blur(16px) saturate(1.6);
-		box-shadow: 0 0 0 0.5px color-mix(in oklab, var(--fg) 14%, transparent);
-		view-transition-name: back;
-		transition: transform var(--spring-ui-duration) var(--spring-ui);
+		z-index: 20; /* above the photo viewer */
+		transition:
+			transform var(--spring-pop-duration) var(--spring-pop),
+			opacity 200ms ease;
 	}
 
-	/* Transition snapshots are flat rectangles, so a backdrop blur would smear a square behind the button. */
-	:global(:root:active-view-transition) .back {
-		backdrop-filter: none;
-		-webkit-backdrop-filter: none;
-		background: color-mix(in oklab, var(--bg) 92%, var(--fg));
-	}
-
-	.back:hover {
-		transform: scale(1.06);
-	}
-
-	.back:active {
-		transform: scale(0.92);
-	}
-
-	.back svg {
-		width: 20px;
-		height: 20px;
-		fill: none;
-		stroke: currentColor;
-		stroke-width: 2;
-		stroke-linecap: round;
-		stroke-linejoin: round;
+	.back.hidden {
+		opacity: 0;
+		transform: scale(0.5);
+		pointer-events: none;
+		transition:
+			transform var(--out) ease-in,
+			opacity var(--out) ease-in;
 	}
 
 	footer {

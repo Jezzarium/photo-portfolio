@@ -5,9 +5,6 @@
 
 	let { data, children } = $props();
 	let trip = $derived(data.trip);
-
-	// The cover is morphing in from the catalogue, so it skips the entrance animation.
-	const entering = morph.photo;
 </script>
 
 <svelte:head>
@@ -23,7 +20,7 @@
 <ul class="grid">
 	{#each trip.photos as photo, i (photo.id)}
 		{@const morphing = !page.params.photo && morph.photo === photo.id}
-		<li style:--ar={ratio(photo)} style:--i={Math.min(i, 12)} class:enter={photo.id !== entering}>
+		<li style:--ar={ratio(photo)} style:--i={Math.min(i, 12)} class="enter">
 			<a
 				href="/{trip.slug}/{photo.id}"
 				data-sveltekit-reset="false"

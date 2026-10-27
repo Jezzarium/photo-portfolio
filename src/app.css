@@ -26,8 +26,17 @@ html.locked {
 	overflow: hidden;
 }
 
+/* A gallery, not a document: no text selection, image dragging or long-press menus. */
 body {
 	margin: 0;
+	-webkit-user-select: none;
+	user-select: none;
+	-webkit-touch-callout: none;
+}
+
+img,
+a {
+	-webkit-user-drag: none;
 }
 
 a {
@@ -40,6 +49,39 @@ h2,
 p {
 	margin: 0;
 	font-weight: 400;
+}
+
+/* Round, frosted icon button (back, close). */
+.round-button {
+	display: grid;
+	place-items: center;
+	width: 40px;
+	height: 40px;
+	border-radius: 50%;
+	color: var(--fg);
+	background: color-mix(in oklab, var(--bg) 72%, transparent);
+	backdrop-filter: blur(16px) saturate(1.6);
+	-webkit-backdrop-filter: blur(16px) saturate(1.6);
+	box-shadow: 0 0 0 0.5px color-mix(in oklab, var(--fg) 14%, transparent);
+	transition: transform var(--spring-ui-duration) var(--spring-ui);
+}
+
+.round-button:hover {
+	transform: scale(1.06);
+}
+
+.round-button:active {
+	transform: scale(0.92);
+}
+
+.round-button svg {
+	width: 20px;
+	height: 20px;
+	fill: none;
+	stroke: currentColor;
+	stroke-width: 2;
+	stroke-linecap: round;
+	stroke-linejoin: round;
 }
 
 /* Images fade in once loaded. Without JS they are always visible. */
@@ -72,27 +114,14 @@ p {
 	animation-timing-function: ease;
 }
 
-/* The back button pops in and out when it appears or leaves. */
-::view-transition-new(back):only-child {
-	animation: pop var(--spring-ui-duration) var(--spring-ui) both;
-}
-
-::view-transition-old(back):only-child {
-	animation: pop 160ms ease reverse both;
-}
-
-@keyframes pop {
-	from {
-		opacity: 0;
-		transform: scale(0.6);
-	}
-}
-
 /* Photos change aspect ratio between views (cropped card, grid, fullscreen). */
 ::view-transition-old(hero),
 ::view-transition-new(hero) {
 	height: 100%;
 	object-fit: cover;
+	/* The crossfade between the two snapshots (e.g. the card's scrim fading away) eases;
+	   only the movement springs. */
+	animation-timing-function: ease;
 }
 
 @media (prefers-reduced-motion: reduce) {

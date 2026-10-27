@@ -1,19 +1,106 @@
-#root {
-    background-color: black;
-    min-height: 100vh;
-    color: white; /* Added for visibility on black background */
+:root {
+	--bg: #f6f5f3;
+	--fg: #141414;
+	--muted: #7a7873;
+	--font: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+	--gutter: clamp(16px, 4vw, 48px);
 }
 
-.google-sans {
-    font-family: "Google Sans", sans-serif;
-    font-optical-sizing: auto;
-    font-weight: 400;
-    font-style: normal;
-    font-variation-settings:
-        "GRAD" 0;
+@media (prefers-color-scheme: dark) {
+	:root {
+		--bg: #0e0e0e;
+		--fg: #ecebe8;
+		--muted: #8b8984;
+	}
+}
+
+html {
+	background: var(--bg);
+	color: var(--fg);
+	font: 15px/1.5 var(--font);
+	-webkit-font-smoothing: antialiased;
+	scrollbar-gutter: stable;
+}
+
+html.locked {
+	overflow: hidden;
 }
 
 body {
-    margin: 0;
-    background-color: black; /* Ensure full page is black */
+	margin: 0;
+}
+
+a {
+	color: inherit;
+	text-decoration: none;
+}
+
+h1,
+h2,
+p {
+	margin: 0;
+	font-weight: 400;
+}
+
+/* Images fade in once loaded. Without JS they are always visible. */
+.js img.fade {
+	opacity: 0;
+	transition: opacity 400ms ease;
+}
+
+.js img.fade.loaded {
+	opacity: 1;
+}
+
+@keyframes rise {
+	from {
+		opacity: 0;
+		transform: translateY(12px);
+	}
+}
+
+/* View transitions */
+
+::view-transition-group(*) {
+	animation-duration: var(--spring-hero-duration);
+	animation-timing-function: var(--spring-hero);
+}
+
+::view-transition-old(root),
+::view-transition-new(root) {
+	animation-duration: 220ms;
+	animation-timing-function: ease;
+}
+
+/* The back button pops in and out when it appears or leaves. */
+::view-transition-new(back):only-child {
+	animation: pop var(--spring-ui-duration) var(--spring-ui) both;
+}
+
+::view-transition-old(back):only-child {
+	animation: pop 160ms ease reverse both;
+}
+
+@keyframes pop {
+	from {
+		opacity: 0;
+		transform: scale(0.6);
+	}
+}
+
+/* Photos change aspect ratio between views (cropped card, grid, fullscreen). */
+::view-transition-old(hero),
+::view-transition-new(hero) {
+	height: 100%;
+	object-fit: cover;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	*,
+	::view-transition-group(*),
+	::view-transition-old(*),
+	::view-transition-new(*) {
+		animation: none !important;
+		transition: none !important;
+	}
 }

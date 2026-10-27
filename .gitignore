@@ -6,3 +6,9 @@ build
 .env
 .env.*
 !.env.example
+
+# Upload script output, and real trip folders (only the example is versioned)
+.upload
+trips/*
+!trips/example
+!trips/README.md

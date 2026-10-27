@@ -7,6 +7,8 @@ export interface Photo {
 	height: number;
 	/** Dominant color, shown while the image loads. */
 	color: string;
+	/** Tiny (~12px) image as a data URI, shown blurred while the real one loads. */
+	placeholder?: string;
 }
 
 export interface Trip {

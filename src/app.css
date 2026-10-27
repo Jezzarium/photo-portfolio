@@ -1,15 +1,19 @@
 :root {
-	--bg: #f6f5f3;
+	--bg: #edece9;
 	--fg: #141414;
+	/* Frosted buttons: white on the light page, the page colour in dark mode. */
+	--button: #fff;
 	--muted: #7a7873;
-	--font: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+	--font: 'Google Sans', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
 	--gutter: clamp(16px, 4vw, 48px);
+	color-scheme: light dark;
 }
 
 @media (prefers-color-scheme: dark) {
 	:root {
 		--bg: #0e0e0e;
 		--fg: #ecebe8;
+		--button: var(--bg);
 		--muted: #8b8984;
 	}
 }
@@ -22,8 +26,13 @@ html {
 	scrollbar-gutter: stable;
 }
 
+/* While the viewer is open. The scrollbar gutter stays reserved so the page doesn't shift, and
+   it's painted with the root background, so that takes the viewer's backdrop colour (set by the
+   viewer, along with --veil while swiping down to close). */
 html.locked {
 	overflow: hidden;
+	background: color-mix(in oklab, var(--tint, var(--bg)) calc(14% * var(--veil, 1)), var(--bg));
+	transition: background-color 300ms ease;
 }
 
 /* A gallery, not a document: no text selection, image dragging or long-press menus. */
@@ -59,7 +68,7 @@ p {
 	height: 40px;
 	border-radius: 50%;
 	color: var(--fg);
-	background: color-mix(in oklab, var(--bg) 72%, transparent);
+	background: color-mix(in oklab, var(--button) 72%, transparent);
 	backdrop-filter: blur(16px) saturate(1.6);
 	-webkit-backdrop-filter: blur(16px) saturate(1.6);
 	box-shadow: 0 0 0 0.5px color-mix(in oklab, var(--fg) 14%, transparent);
@@ -82,16 +91,6 @@ p {
 	stroke-width: 2;
 	stroke-linecap: round;
 	stroke-linejoin: round;
-}
-
-/* Images fade in once loaded. Without JS they are always visible. */
-.js img.fade {
-	opacity: 0;
-	transition: opacity 400ms ease;
-}
-
-.js img.fade.loaded {
-	opacity: 1;
 }
 
 @keyframes rise {

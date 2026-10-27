@@ -1,22 +1,26 @@
 import type { Photo, Trip } from './content/index.ts';
 
-/** Generated widths for every photo. The upload script will produce the same set. */
-const WIDTHS = [480, 960, 1600, 2400];
+/** Generated widths for every photo. The upload script (scripts/upload.ts) produces this same set. */
+export const WIDTHS = [480, 960, 1600, 2400];
 
-/** Placeholder images until real photos live in R2. */
-const PLACEHOLDERS = true;
-const ORIGIN = 'https://r2.jabourjailibilodeau.ca/photos';
+export const ORIGIN = 'https://r2.jabourjailibilodeau.ca/photos';
+
+/** The widths that exist for a photo: none wider than the original, but always at least one. */
+export function widths(photo: Pick<Photo, 'width'>) {
+	const fit = WIDTHS.filter((w) => w <= photo.width);
+	return fit.length ? fit : [WIDTHS[0]];
+}
 
 export function src(trip: Trip, photo: Photo, width: number) {
-	if (PLACEHOLDERS) {
-		const height = Math.round((width * photo.height) / photo.width);
-		return `https://picsum.photos/seed/${trip.slug}-${photo.id}/${width}/${height}`;
-	}
 	return `${ORIGIN}/${trip.slug}/${photo.id}-${width}.avif`;
 }
 
+/** The plain `src` fallback: 960 wide, or the largest there is below that. */
+export const fallback = (trip: Trip, photo: Photo) =>
+	src(trip, photo, widths(photo).filter((w) => w <= 960).at(-1)!);
+
 export function srcset(trip: Trip, photo: Photo) {
-	return WIDTHS.filter((w) => w <= photo.width)
+	return widths(photo)
 		.map((w) => `${src(trip, photo, w)} ${w}w`)
 		.join(', ');
 }
@@ -38,6 +42,20 @@ export const sizes = {
 	viewer: '(min-width: 900px) calc(100vw - 420px), 100vw'
 };
 
+/**
+ * The placeholder as a CSS background: the tiny image blurred by an SVG filter. The browser
+ * rasterises it once at the element's size, so the blur costs nothing per frame.
+ */
+export function blurred(photo: Photo) {
+	if (!photo.placeholder) return undefined;
+	const svg =
+		`<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 ${photo.width} ${photo.height}' preserveAspectRatio='none'>` +
+		`<filter id='b' color-interpolation-filters='sRGB'><feGaussianBlur stdDeviation='${Math.max(photo.width, photo.height) / 24}'/>` +
+		`<feComponentTransfer><feFuncA type='discrete' tableValues='1 1'/></feComponentTransfer></filter>` +
+		`<image width='100%' height='100%' preserveAspectRatio='none' filter='url(%23b)' href='${photo.placeholder}'/></svg>`;
+	return `url("data:image/svg+xml;charset=utf-8,${svg}")`;
+}
+
 const cache = new Map<string, Promise<void>>();
 
 /** Loads and decodes an image ahead of time so it is ready when shown. */
@@ -52,11 +70,4 @@ export function preload(srcset: string, sizes: string): Promise<void> {
 		cache.set(key, promise);
 	}
 	return promise;
-}
-
-/** Fades an image in once loaded (see `img.fade` in app.css). */
-export function reveal(img: HTMLImageElement) {
-	const done = () => img.classList.add('loaded');
-	if (img.complete && img.naturalWidth) done();
-	else img.addEventListener('load', done, { once: true });
 }

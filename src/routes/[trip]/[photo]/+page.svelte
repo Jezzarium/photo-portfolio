@@ -3,7 +3,8 @@
 	import { fade } from 'svelte/transition';
 	import { goto } from '$app/navigation';
 	import { SpringValue, VelocityTracker, rubberBand } from '#lib/gestures.ts';
-	import { preload, ratio, sizes, src, srcset } from '#lib/images.ts';
+	import Photo from '#lib/Photo.svelte';
+	import { preload, ratio, sizes, srcset } from '#lib/images.ts';
 
 	let { data } = $props();
 	let { trip, photo, index, prev, next } = $derived(data);
@@ -30,10 +31,20 @@
 	let backdrop: HTMLElement;
 	let aside: HTMLElement;
 
+	const root = typeof document === 'object' ? document.documentElement : undefined;
+
 	$effect(() => {
-		document.documentElement.classList.add('locked');
-		return () => document.documentElement.classList.remove('locked');
+		root!.classList.add('locked');
+		return () => {
+			root!.classList.remove('locked');
+			root!.style.removeProperty('--tint');
+			root!.style.removeProperty('--veil');
+			root!.style.transition = '';
+		};
 	});
+
+	// The root paints the scrollbar gutter, so it follows the backdrop's colour.
+	$effect(() => root!.style.setProperty('--tint', photo.color));
 
 	/* Pager. All photos sit side by side on a track, and a spring moves the track in units of
 	   pages. It writes the track's transform directly, so a frame costs one style write. */
@@ -173,10 +184,10 @@
 			drag.y0 = e.clientY;
 			dx = dy = 0;
 			if (drag.axis === 'y') {
-				drag.img = track.querySelector<HTMLElement>('[data-current] img') ?? undefined;
+				drag.img = track.querySelector<HTMLElement>('[data-current] .shot') ?? undefined;
 				clearTimeout(unclipTimer);
 				stage.classList.add('dismissing');
-				for (const el of [drag.img, backdrop, aside]) if (el) el.style.transition = 'none';
+				for (const el of [drag.img, backdrop, aside, root]) if (el) el.style.transition = 'none';
 			}
 		}
 		drag.tracker.add(e.timeStamp, dx, dy);
@@ -188,7 +199,7 @@
 			const y = dy < 0 ? -rubberBand(-dy, drag.h) : dy;
 			const scale = 1 - Math.min(down / drag.h, 1) * 0.3;
 			if (drag.img) drag.img.style.transform = `translate(${dx}px, ${y}px) scale(${scale})`;
-			backdrop.style.opacity = `${1 - Math.min(down / (drag.h * 0.6), 1)}`;
+			root!.style.setProperty('--veil', `${1 - Math.min(down / (drag.h * 0.6), 1)}`);
 			aside.style.opacity = `${1 - Math.min(down / (drag.h * 0.25), 1)}`;
 		}
 	}
@@ -226,11 +237,13 @@
 		const spring = 'var(--spring-hero-duration) var(--spring-hero)';
 		if (img) img.style.transition = `transform ${spring}`;
 		backdrop.style.transition = aside.style.transition = `opacity ${spring}`;
-		for (const el of [img, backdrop, aside]) if (el) el.style.transform = el.style.opacity = '';
+		root!.style.transition = `background-color ${spring}`;
+		root!.style.removeProperty('--veil');
+		for (const el of [img, aside]) if (el) el.style.transform = el.style.opacity = '';
 		unclipTimer = setTimeout(() => {
 			stage.classList.remove('dismissing');
 			// Hand transitions back to the stylesheet (the backdrop eases its colour between photos).
-			for (const el of [img, backdrop, aside]) if (el) el.style.transition = '';
+			for (const el of [img, backdrop, aside, root]) if (el) el.style.transition = '';
 		}, parseFloat(getComputedStyle(stage).getPropertyValue('--spring-hero-duration')));
 	}
 
@@ -329,17 +342,13 @@
 					data-current={current || null}
 					aria-hidden={!current || null}
 				>
-					<img
-						src={src(trip, p, 1600)}
-						srcset={srcset(trip, p)}
+					<Photo
+						class="shot"
+						{trip}
+						photo={p}
 						sizes={sizes.viewer}
-						width={p.width}
-						height={p.height}
-						alt={p.title}
-						draggable="false"
-						style:--ar={ratio(p)}
-						style:background={p.color}
-						style:view-transition-name={p.id === photo.id ? 'hero' : null}
+						eager
+						style="--ar: {ratio(p)};{p.id === photo.id ? ' view-transition-name: hero;' : ''}"
 					/>
 				</div>
 			{/each}
@@ -392,6 +401,8 @@
 		inset: 0;
 		z-index: -1;
 		background: color-mix(in oklab, var(--tint) 14%, var(--bg));
+		/* --veil fades it while swiping down to close (set on the root, which shares it). */
+		opacity: var(--veil, 1);
 		transition: background-color 300ms ease;
 	}
 
@@ -431,12 +442,9 @@
 
 	/* Size the image box to the photo itself (not a letterboxed frame), so the
 	   morph animates between the real photo edges. */
-	img {
-		display: block;
+	.slide :global(.shot) {
 		width: min(100cqw, 100cqh * var(--ar));
-		height: auto;
 		aspect-ratio: var(--ar);
-		-webkit-user-drag: none;
 	}
 
 	aside {

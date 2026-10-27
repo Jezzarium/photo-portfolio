@@ -1,0 +1,30 @@
+{
+	"name": "Example",
+	"year": 2026,
+	"cover": "harbour-at-dawn.jpg",
+	"photos": [
+		{
+			"file": "harbour-at-dawn.jpg",
+			"title": "Harbour at dawn",
+			"description": "Got there before the fishing boats left. The fog lifted about ten minutes later."
+		},
+		{
+			"file": "temple-steps.jpg",
+			"title": "Temple steps",
+			"description": "Counted 268 of them on the way up."
+		},
+		{
+			"file": "night-market.jpg",
+			"title": "Night market"
+		},
+		{
+			"file": "window-seat.jpg",
+			"title": "Window seat",
+			"description": "Somewhere between two cities, nothing but rice fields."
+		},
+		{
+			"file": "last-train.jpg",
+			"title": "Last train"
+		}
+	]
+}

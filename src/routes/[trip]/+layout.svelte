@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { page } from '$app/state';
-	import { preload, ratio, reveal, sizes, src, srcset } from '#lib/images.ts';
+	import Photo from '#lib/Photo.svelte';
+	import { preload, ratio, sizes, srcset } from '#lib/images.ts';
 	import { morph } from '#lib/morph.svelte.ts';
 
 	let { data, children } = $props();
@@ -26,19 +27,13 @@
 				data-sveltekit-reset="false"
 				onpointerenter={() => preload(srcset(trip, photo), sizes.viewer)}
 			>
-				<img
-					class="fade"
-					use:reveal
-					src={src(trip, photo, 960)}
-					srcset={srcset(trip, photo)}
+				<Photo
+					class="thumb"
+					{trip}
+					{photo}
 					sizes={sizes.thumb(photo)}
-					width={photo.width}
-					height={photo.height}
-					loading={i < 6 || morphing ? 'eager' : 'lazy'}
-					decoding="async"
-					alt={photo.title}
-					style:background={photo.color}
-					style:view-transition-name={morphing ? 'hero' : null}
+					eager={i < 6 || morphing}
+					style={morphing ? 'view-transition-name: hero' : ''}
 				/>
 				<span>{photo.title}</span>
 			</a>
@@ -94,10 +89,7 @@
 		animation-delay: calc(var(--i) * 30ms);
 	}
 
-	img {
-		display: block;
-		width: 100%;
-		height: auto;
+	.grid :global(.thumb) {
 		aspect-ratio: var(--ar);
 	}
 

@@ -7,7 +7,8 @@
 	/**
 	 * A photo that shows its blurred placeholder (with a soft light sweep) until the
 	 * real image has loaded, then fades the image in over it. The wrapper is the box:
-	 * size it from the parent with `class`, and the image fills it.
+	 * size it from the parent with `class`, and the image fills it. `preview` is an image that has
+	 * already loaded (like the grid thumbnail of a photo being opened) to show instead of the blur.
 	 */
 	let {
 		trip,
@@ -16,6 +17,7 @@
 		class: className = '',
 		style = '',
 		eager = false,
+		preview,
 		...rest
 	}: {
 		trip: Trip;
@@ -24,6 +26,7 @@
 		class?: string;
 		style?: string;
 		eager?: boolean;
+		preview?: string;
 	} & Omit<HTMLImgAttributes, 'src' | 'srcset' | 'sizes' | 'class' | 'style'> = $props();
 
 	let img = $state<HTMLImageElement>();
@@ -40,9 +43,9 @@
 	class:loaded
 	{style}
 	style:background-color={photo.color}
-	style:background-image={blurred(photo)}
+	style:background-image={preview ? `url("${preview}")` : blurred(photo)}
 >
-	{#if !loaded}
+	{#if !loaded && !preview}
 		<span class="sweep" out:fade={{ duration: 300 }}></span>
 	{/if}
 	<img

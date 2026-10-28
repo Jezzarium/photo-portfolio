@@ -11,8 +11,12 @@ export function widths(photo: Pick<Photo, 'width'>) {
 	return fit.length ? fit : [WIDTHS[0]];
 }
 
+/** A photo's file name at one width: AVIF, or a gain-map JPEG for HDR photos. */
+export const file = (photo: Pick<Photo, 'id' | 'hdr'>, width: number) =>
+	`${photo.id}-${width}.${photo.hdr ? 'jpg' : 'avif'}`;
+
 export function src(trip: Trip, photo: Photo, width: number) {
-	return `${ORIGIN}/${trip.slug}/${photo.id}-${width}.avif`;
+	return `${ORIGIN}/${trip.slug}/${file(photo, width)}`;
 }
 
 /** The plain `src` fallback: 960 wide, or the largest there is below that. */

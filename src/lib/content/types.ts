@@ -9,6 +9,8 @@ export interface Photo {
 	color: string;
 	/** Tiny (~12px) image as a data URI, shown blurred while the real one loads. */
 	placeholder?: string;
+	/** Has an HDR gain map, so it is served as gain-map JPEGs instead of AVIF. */
+	hdr?: boolean;
 }
 
 export interface Trip {

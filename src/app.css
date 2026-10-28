@@ -1,19 +1,134 @@
-#root {
-    background-color: black;
-    min-height: 100vh;
-    color: white; /* Added for visibility on black background */
+:root {
+	--bg: #edece9;
+	--fg: #141414;
+	/* Frosted buttons: white on the light page, the page colour in dark mode. */
+	--button: #fff;
+	--muted: #7a7873;
+	--font: 'Google Sans', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+	--gutter: clamp(16px, 4vw, 48px);
+	color-scheme: light dark;
 }
 
-.google-sans {
-    font-family: "Google Sans", sans-serif;
-    font-optical-sizing: auto;
-    font-weight: 400;
-    font-style: normal;
-    font-variation-settings:
-        "GRAD" 0;
+@media (prefers-color-scheme: dark) {
+	:root {
+		--bg: #0e0e0e;
+		--fg: #ecebe8;
+		--button: var(--bg);
+		--muted: #8b8984;
+	}
 }
 
+html {
+	background: var(--bg);
+	color: var(--fg);
+	font: 15px/1.5 var(--font);
+	-webkit-font-smoothing: antialiased;
+	scrollbar-gutter: stable;
+}
+
+/* While the viewer is open. The scrollbar gutter stays reserved so the page doesn't shift, and
+   it's painted with the root background, so that takes the viewer's backdrop colour (set by the
+   viewer, along with --veil while swiping down to close). */
+html.locked {
+	overflow: hidden;
+	background: color-mix(in oklab, var(--tint, var(--bg)) calc(14% * var(--veil, 1)), var(--bg));
+	transition: background-color 300ms ease;
+}
+
+/* A gallery, not a document: no text selection, image dragging or long-press menus. */
 body {
-    margin: 0;
-    background-color: black; /* Ensure full page is black */
+	margin: 0;
+	-webkit-user-select: none;
+	user-select: none;
+	-webkit-touch-callout: none;
+}
+
+img,
+a {
+	-webkit-user-drag: none;
+}
+
+a {
+	color: inherit;
+	text-decoration: none;
+}
+
+h1,
+h2,
+p {
+	margin: 0;
+	font-weight: 400;
+}
+
+/* Round, frosted icon button (back, close). */
+.round-button {
+	display: grid;
+	place-items: center;
+	width: 40px;
+	height: 40px;
+	border-radius: 50%;
+	color: var(--fg);
+	background: color-mix(in oklab, var(--button) 72%, transparent);
+	backdrop-filter: blur(16px) saturate(1.6);
+	-webkit-backdrop-filter: blur(16px) saturate(1.6);
+	box-shadow: 0 0 0 0.5px color-mix(in oklab, var(--fg) 14%, transparent);
+	transition: transform var(--spring-ui-duration) var(--spring-ui);
+}
+
+.round-button:hover {
+	transform: scale(1.06);
+}
+
+.round-button:active {
+	transform: scale(0.92);
+}
+
+.round-button svg {
+	width: 20px;
+	height: 20px;
+	fill: none;
+	stroke: currentColor;
+	stroke-width: 2;
+	stroke-linecap: round;
+	stroke-linejoin: round;
+}
+
+@keyframes rise {
+	from {
+		opacity: 0;
+		transform: translateY(12px);
+	}
+}
+
+/* View transitions */
+
+::view-transition-group(*) {
+	animation-duration: var(--spring-hero-duration);
+	animation-timing-function: var(--spring-hero);
+}
+
+::view-transition-old(root),
+::view-transition-new(root) {
+	animation-duration: 220ms;
+	animation-timing-function: ease;
+}
+
+/* Photos change aspect ratio between views (cropped card, grid, fullscreen). */
+::view-transition-old(hero),
+::view-transition-new(hero) {
+	height: 100%;
+	object-fit: cover;
+	/* The crossfade between the two snapshots (e.g. the card's scrim fading away) eases;
+	   only the movement springs. */
+	animation-timing-function: ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	*,
+	::view-transition-group(*),
+	::view-transition-old(*),
+	::view-transition-new(*) {
+		animation: none !important;
+		transition: none !important;
+	}
 }

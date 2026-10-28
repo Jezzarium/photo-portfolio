@@ -1,11 +1,20 @@
 <script lang="ts">
-	import { page } from '$app/state';
+	import { onNavigate } from '$app/navigation';
 	import Photo from '#lib/Photo.svelte';
+	import { hero, opened, thumb } from '#lib/hero.svelte.ts';
 	import { preload, ratio, sizes, srcset } from '#lib/images.ts';
-	import { morph } from '#lib/morph.svelte.ts';
 
 	let { data, children } = $props();
 	let trip = $derived(data.trip);
+
+	// Opening a photo from the grid: tell the viewer to fly it in from its thumbnail.
+	onNavigate(({ from, to }) => {
+		const id = to?.params?.photo;
+		if (!id || from?.params?.photo || to?.params?.trip !== trip.slug) return;
+		const img = thumb(id)?.querySelector('img');
+		opened.id = id;
+		opened.preview = img?.complete && img.naturalWidth ? img.currentSrc : undefined;
+	});
 </script>
 
 <svelte:head>
@@ -20,21 +29,14 @@
 <!-- The grid stays mounted while a photo is open, so closing it keeps the scroll position. -->
 <ul class="grid">
 	{#each trip.photos as photo, i (photo.id)}
-		{@const morphing = !page.params.photo && morph.photo === photo.id}
-		<li style:--ar={ratio(photo)} style:--i={Math.min(i, 12)} class="enter">
+		{@const flying = hero.hidden === photo.id}
+		<li style:--ar={ratio(photo)} style:--i={Math.min(i, 12)} class="enter" data-thumb={photo.id}>
 			<a
 				href="/{trip.slug}/{photo.id}"
 				data-sveltekit-reset="false"
 				onpointerenter={() => preload(srcset(trip, photo), sizes.viewer)}
 			>
-				<Photo
-					class="thumb"
-					{trip}
-					{photo}
-					sizes={sizes.thumb(photo)}
-					eager={i < 6 || morphing}
-					style={morphing ? 'view-transition-name: hero' : ''}
-				/>
+				<Photo class="thumb {flying ? 'flying' : ''}" {trip} {photo} sizes={sizes.thumb(photo)} eager={i < 6 || flying} />
 				<span>{photo.title}</span>
 			</a>
 		</li>
@@ -91,6 +93,11 @@
 
 	.grid :global(.thumb) {
 		aspect-ratio: var(--ar);
+	}
+
+	/* The photo itself is flying to or from here. */
+	.grid :global(.thumb.flying) {
+		visibility: hidden;
 	}
 
 	span {

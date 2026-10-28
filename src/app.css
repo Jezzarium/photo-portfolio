@@ -1,7 +1,7 @@
 :root {
 	--bg: #edece9;
 	--fg: #141414;
-	/* Frosted buttons: white on the light page, the page colour in dark mode. */
+	/* Frosted buttons: a step lighter than the page, so they stand out from it. */
 	--button: #fff;
 	--muted: #7a7873;
 	--font: 'Google Sans', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
@@ -13,7 +13,7 @@
 	:root {
 		--bg: #0e0e0e;
 		--fg: #ecebe8;
-		--button: var(--bg);
+		--button: #3a3936;
 		--muted: #8b8984;
 	}
 }
@@ -72,15 +72,26 @@ p {
 	backdrop-filter: blur(16px) saturate(1.6);
 	-webkit-backdrop-filter: blur(16px) saturate(1.6);
 	box-shadow: 0 0 0 0.5px color-mix(in oklab, var(--fg) 14%, transparent);
-	transition: transform var(--spring-ui-duration) var(--spring-ui);
+	-webkit-tap-highlight-color: transparent;
+	/* Lets go with a little bounce. */
+	transition:
+		transform var(--spring-pop-duration) var(--spring-pop),
+		background-color 200ms ease;
 }
 
-.round-button:hover {
-	transform: scale(1.06);
+/* Only with a real pointer: after a tap, touch screens keep :hover until the next one. */
+@media (hover: hover) {
+	.round-button:hover {
+		transform: scale(1.06);
+	}
 }
 
+/* Presses in straight away, and darkens a touch, so even a quick tap shows. */
 .round-button:active {
-	transform: scale(0.92);
+	transform: scale(0.84);
+	background-color: color-mix(in oklab, var(--button) 64%, var(--fg) 12%);
+	transition-duration: 70ms;
+	transition-timing-function: ease-out;
 }
 
 .round-button svg {
@@ -93,6 +104,19 @@ p {
 	stroke-linejoin: round;
 }
 
+/* Big enough to hit with a thumb. */
+@media (pointer: coarse) {
+	.round-button {
+		width: 52px;
+		height: 52px;
+	}
+
+	.round-button svg {
+		width: 26px;
+		height: 26px;
+	}
+}
+
 @keyframes rise {
 	from {
 		opacity: 0;
@@ -100,34 +124,8 @@ p {
 	}
 }
 
-/* View transitions */
-
-::view-transition-group(*) {
-	animation-duration: var(--spring-hero-duration);
-	animation-timing-function: var(--spring-hero);
-}
-
-::view-transition-old(root),
-::view-transition-new(root) {
-	animation-duration: 220ms;
-	animation-timing-function: ease;
-}
-
-/* Photos change aspect ratio between views (cropped card, grid, fullscreen). */
-::view-transition-old(hero),
-::view-transition-new(hero) {
-	height: 100%;
-	object-fit: cover;
-	/* The crossfade between the two snapshots (e.g. the card's scrim fading away) eases;
-	   only the movement springs. */
-	animation-timing-function: ease;
-}
-
 @media (prefers-reduced-motion: reduce) {
-	*,
-	::view-transition-group(*),
-	::view-transition-old(*),
-	::view-transition-new(*) {
+	* {
 		animation: none !important;
 		transition: none !important;
 	}

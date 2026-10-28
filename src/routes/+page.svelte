@@ -82,17 +82,6 @@
 		background: linear-gradient(transparent, rgb(0 0 0 / 0.4));
 	}
 
-	/* Specific enough to beat the Photo component's own opacity-only transition. */
-	.trips :global(.frame img) {
-		transition:
-			transform 700ms cubic-bezier(0.22, 1, 0.36, 1),
-			opacity 500ms ease;
-	}
-
-	a:hover :global(.frame img) {
-		transform: scale(1.04);
-	}
-
 	.meta {
 		position: absolute;
 		inset: auto 0 0;
@@ -100,7 +89,13 @@
 		justify-content: space-between;
 		align-items: baseline;
 		padding: 0 18px 16px;
+		color: rgb(255 255 255 / 0.8);
 		pointer-events: none;
+		transition: color 150ms ease;
+	}
+
+	a:hover .meta {
+		color: #fff;
 	}
 
 	.name {

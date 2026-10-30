@@ -10,8 +10,8 @@
 </svelte:head>
 
 <header>
-	<h1>Hey, welcome to my photography portfolio</h1>
-	<p>Here's a collection of my favorite pictures that I took. Feel free to explore each portfolio!</p>
+	<h1>Hey there, I'm Justin</h1>
+	<p>Here's a collection of photos I've taken. Feel free to explore each portfolio!</p>
 </header>
 
 <ul class="trips">

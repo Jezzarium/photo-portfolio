@@ -2,12 +2,16 @@
 	import { waapi } from 'animejs';
 	import { onNavigate } from '$app/navigation';
 	import { page } from '$app/state';
+	import { cameFrom, trackHistory } from '#lib/history.ts';
 	import { springCSS } from '#lib/springs.ts';
 	import '../app.css';
 
 	let { children } = $props();
 
 	let main: HTMLElement;
+	let up = $derived(page.params.photo ? `/${page.params.trip}` : '/');
+
+	trackHistory();
 
 	// Moving between trips (or to and from the catalogue) fades the page out and the new one in.
 	// Within a trip, photos fly between the grid and the viewer instead (see the photo route).
@@ -34,8 +38,14 @@
 {#if page.params.trip}
 	<a
 		class="round-button back"
-		href={page.params.photo ? `/${page.params.trip}` : '/'}
+		href={up}
 		data-sveltekit-reset={page.params.photo ? 'false' : null}
+		onclick={(e) => {
+			// Step back rather than adding an entry, so the browser's back doesn't reopen this page.
+			if (!cameFrom(up)) return;
+			e.preventDefault();
+			history.back();
+		}}
 		aria-label={page.params.photo ? 'Close' : 'All trips'}
 	>
 		<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7" /></svg>

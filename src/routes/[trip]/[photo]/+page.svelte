@@ -6,6 +6,7 @@
 	import { SpringValue, VelocityTracker, rubberBand } from '#lib/gestures.ts';
 	import Photo from '#lib/Photo.svelte';
 	import { center, hero, landing, onto, opened, placement, thumb, transform, type Placement } from '#lib/hero.svelte.ts';
+	import { up } from '#lib/history.ts';
 	import { preload, ratio, sizes, srcset } from '#lib/images.ts';
 	import { launch } from '#lib/springs.ts';
 
@@ -518,7 +519,7 @@
 	function dismiss(v: { x: number; y: number }) {
 		flick = v;
 		leaving = true;
-		goto(close, { reset: false });
+		up(close);
 	}
 
 	let unclipTimer: ReturnType<typeof setTimeout>;
@@ -648,7 +649,7 @@
 
 	function onkeydown(e: KeyboardEvent) {
 		if (drag || toss || pinch) return;
-		if (e.key === 'Escape') goto(close, { reset: false });
+		if (e.key === 'Escape') up(close);
 		else if (e.key === 'ArrowLeft' && target > 0) go(target - 1);
 		else if (e.key === 'ArrowRight' && target < last) go(target + 1);
 	}

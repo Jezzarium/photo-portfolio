@@ -94,6 +94,7 @@
 		clip();
 		if (zoomed) unzoom();
 		target = page;
+		reveal(trip.photos[page].id);
 		if (reduced()) pager.set(page);
 		else {
 			if (velocity !== undefined) pager.velocity = velocity;
@@ -193,6 +194,8 @@
 
 	$effect(() =>
 		untrack(() => {
+			// Landed straight on the photo: line the grid up under it for when it closes.
+			if (!from) reveal(photo.id);
 			const box = from && !reduced() ? thumb(from.id!)?.getBoundingClientRect() : undefined;
 			const shot = current();
 			if (!box || !shot) return;
@@ -221,14 +224,8 @@
 		const el = thumb(p.id);
 		if (!shot || !el) return;
 
-		let box = el.getBoundingClientRect();
-		// Paged past what the grid shows: bring the thumbnail into view to land on.
-		if (box.bottom < 0 || box.top > innerHeight) {
-			el.scrollIntoView({ block: 'center', behavior: 'instant' });
-			pin();
-			box = el.getBoundingClientRect();
-		}
-
+		reveal(p.id);
+		const box = el.getBoundingClientRect();
 		const start = hold(shot);
 		const end = onto(shot, box);
 		const ease = toward(start, end, flick);
@@ -246,6 +243,27 @@
 				resolve();
 			}, landing(ease, shot, start, end))
 		);
+	}
+
+	/**
+	 * Scrolls the grid under the viewer so photo `id`'s thumbnail is in the middle of the screen
+	 * (as near as the page allows), ready for the photo to land on. Done while paging (and again on the way out), while the backdrop still hides the
+	 * grid, so it's already in place when the backdrop fades. The viewer moves with the scroll, so
+	 * nothing on screen shifts.
+	 *
+	 * The scroll is kept within the page itself, not the browser's own limit: the viewer (its
+	 * backdrop reaches half a screen below it, and so can a photo dragged down) lets the page
+	 * scroll further while it's open, and the page would jump back up as soon as it closed.
+	 */
+	function reveal(id: string) {
+		const el = thumb(id);
+		if (!el) return;
+		const box = el.getBoundingClientRect();
+		const max = Math.max(0, document.body.offsetHeight - root!.clientHeight);
+		const y = Math.round(clamp(scrollY + box.top + box.height / 2 - innerHeight / 2, 0, max));
+		if (y === Math.round(scrollY)) return;
+		scrollTo({ top: y, behavior: 'instant' });
+		pin();
 	}
 
 	/** The hero spring from `a` to `b`, launched at `v` px/s: its speed along the way, as a share of the distance per second. */
@@ -276,6 +294,7 @@
 	function startPull(): Pull {
 		const img = current();
 		const base = img ? hold(img) : REST;
+		reveal(trip.photos[target].id);
 		takeOff(trip.photos[target].id);
 		for (const el of [img, backdrop, aside, root]) if (el) el.style.transition = 'none';
 		return { img, h: stage.clientHeight, base };

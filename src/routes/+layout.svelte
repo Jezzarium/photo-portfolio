@@ -57,11 +57,12 @@
 </main>
 
 <footer>
-	<a href="https://jabourjailibilodeau.ca">Justin Abourjaili-Bilodeau</a>
+	<p>Photographs © {new Date().getFullYear()} <a href="https://jabourjailibilodeau.ca">Justin Abourjaili-Bilodeau</a>. All rights reserved.</p>
 </footer>
 
 <style>
 	main {
+		flex: 1;
 		padding: 24px var(--gutter) 0;
 	}
 

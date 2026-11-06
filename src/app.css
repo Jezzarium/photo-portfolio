@@ -35,8 +35,15 @@ html.locked {
 	transition: background-color 300ms ease;
 }
 
-/* A gallery, not a document: no text selection, image dragging or long-press menus. */
+/* A gallery, not a document: no text selection, image dragging or long-press menus.
+   At least a screen tall, so the footer sits at the bottom even when there isn't much above it
+   (main grows to fill the rest). svh rather than dvh, so it doesn't reflow as mobile toolbars
+   show and hide. */
 body {
+	display: flex;
+	flex-direction: column;
+	min-height: 100vh;
+	min-height: 100svh;
 	margin: 0;
 	-webkit-user-select: none;
 	user-select: none;

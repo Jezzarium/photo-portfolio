@@ -224,8 +224,13 @@
 		const el = thumb(p.id);
 		if (!shot || !el) return;
 
-		reveal(p.id);
-		const box = el.getBoundingClientRect();
+		// Only scroll when the thumbnail is off screen: scrolling under a photo that's being dragged
+		// or let go of makes iOS Safari's viewer jump.
+		let box = el.getBoundingClientRect();
+		if (box.bottom < 0 || box.top > innerHeight) {
+			reveal(p.id);
+			box = el.getBoundingClientRect();
+		}
 		const start = hold(shot);
 		const end = onto(shot, box);
 		const ease = toward(start, end, flick);
@@ -294,7 +299,6 @@
 	function startPull(): Pull {
 		const img = current();
 		const base = img ? hold(img) : REST;
-		reveal(trip.photos[target].id);
 		takeOff(trip.photos[target].id);
 		for (const el of [img, backdrop, aside, root]) if (el) el.style.transition = 'none';
 		return { img, h: stage.clientHeight, base };

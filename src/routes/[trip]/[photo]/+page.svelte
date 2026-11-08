@@ -8,7 +8,7 @@
 	import { center, hero, landing, onto, opened, placement, thumb, transform, type Placement } from '#lib/hero.svelte.ts';
 	import { up } from '#lib/history.ts';
 	import { preload, ratio, sizes, srcset } from '#lib/images.ts';
-	import { launch } from '#lib/springs.ts';
+	import { launch } from '#lib/launch.ts';
 
 	let { data } = $props();
 	let { trip, photo, index, prev, next } = $derived(data);
@@ -119,7 +119,7 @@
 
 	// Decode the neighbours up front so they never pop in mid-swipe.
 	$effect(() => {
-		for (const p of [trip.photos[target - 1], trip.photos[target + 1]]) if (p) preload(srcset(trip, p), sizes.viewer);
+		for (const p of [trip.photos[target - 1], trip.photos[target + 1]]) if (p) preload(srcset(trip, p), sizes.viewer(p));
 	});
 
 	/** Where the pager sits for a drag `x` pages along: no more than a page past where it started, and resisting past either end. */
@@ -309,7 +309,10 @@
 	function pull({ img, h, base }: Pull, dx: number, dy: number, away: number) {
 		const scale = 1 - Math.min(away / h, 1) * 0.3;
 		if (img) img.style.transform = transform({ x: base.x + dx, y: base.y + dy, sx: base.sx * scale, sy: base.sy * scale });
-		root!.style.setProperty('--veil', `${1 - Math.min(away / (h * 0.6), 1)}`);
+		// The backdrop fades, and the root's scrollbar gutter with it.
+		const veil = `${1 - Math.min(away / (h * 0.6), 1)}`;
+		backdrop.style.opacity = veil;
+		root!.style.setProperty('--veil', veil);
 		aside.style.opacity = `${1 - Math.min(away / (h * 0.25), 1)}`;
 	}
 
@@ -553,7 +556,7 @@
 		backdrop.style.transition = aside.style.transition = `opacity ${spring}`;
 		root!.style.transition = `background-color ${spring}`;
 		root!.style.removeProperty('--veil');
-		for (const el of [img, aside]) if (el) el.style.transform = el.style.opacity = '';
+		for (const el of [img, aside, backdrop]) if (el) el.style.transform = el.style.opacity = '';
 		unclipTimer = setTimeout(() => {
 			land();
 			// Hand transitions back to the stylesheet (the backdrop eases its colour between photos).
@@ -720,8 +723,9 @@
 						class="shot"
 						{trip}
 						photo={p}
-						sizes={p.id === zoomed ? '400vw' : sizes.viewer}
+						sizes={p.id === zoomed ? '400vw' : sizes.viewer(p)}
 						eager
+						fetchpriority={current ? 'high' : 'low'}
 						preview={p.id === from?.id ? from.preview : undefined}
 						style="--ar: {ratio(p)}"
 					/>
@@ -776,16 +780,14 @@
 		touch-action: none; /* nothing scrolls the page out from under it */
 	}
 
-	/* Its own layer so swiping down can fade it to reveal the grid underneath. Changing photos
-	   shifts its colour (a crossfade would let the grid show through). It reaches under Safari's
-	   see-through toolbars, so they show it too. */
+	/* Its own layer so swiping down (which sets its opacity) can fade it to reveal the grid
+	   underneath. Changing photos shifts its colour (a crossfade would let the grid show through).
+	   It reaches under Safari's see-through toolbars, so they show it too. */
 	.backdrop {
 		position: absolute;
 		inset: -50vh 0;
 		z-index: -1;
 		background: color-mix(in oklab, var(--tint) 14%, var(--bg));
-		/* --veil fades it while swiping down to close (set on the root, which shares it). */
-		opacity: var(--veil, 1);
 		transition: background-color 300ms ease;
 	}
 
@@ -873,7 +875,7 @@
 	.caption {
 		grid-area: 1 / 1;
 		align-self: end;
-		animation: caption-in var(--spring-ui-duration) var(--spring-ui) both;
+		animation: caption-in var(--spring-ui-duration) var(--spring-ui) backwards;
 	}
 
 	@keyframes caption-in {

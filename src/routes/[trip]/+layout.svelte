@@ -1,5 +1,7 @@
 <script lang="ts">
-	import { onNavigate } from '$app/navigation';
+	import { onMount } from 'svelte';
+	import { onNavigate, preloadCode } from '$app/navigation';
+	import { page } from '$app/state';
 	import Photo from '#lib/Photo.svelte';
 	import { hero, opened, thumb } from '#lib/hero.svelte.ts';
 	import { preload, ratio, sizes, srcset } from '#lib/images.ts';
@@ -15,6 +17,30 @@
 		opened.id = id;
 		opened.preview = img?.complete && img.naturalWidth ? img.currentSrc : undefined;
 	});
+
+	// The viewer's code (and anime.js with it) stays out of the page's first load, but is fetched
+	// once the page has finished loading and the browser is idle, so opening a photo never waits on it.
+	onMount(() => {
+		const fetchViewer = () => preloadCode('/[trip]/[photo]');
+		// Safari has no requestIdleCallback.
+		const idle = () => ('requestIdleCallback' in window ? requestIdleCallback(fetchViewer) : setTimeout(fetchViewer, 200));
+		if (document.readyState === 'complete') idle();
+		else addEventListener('load', idle, { once: true });
+		return () => removeEventListener('load', idle);
+	});
+
+	/* Hovering a thumbnail gets its full-size image ready for opening. With a mouse, only once the
+	   pointer settles on it: running it over the grid shouldn't queue up a download for every photo
+	   it crosses, while the thumbnails themselves are still loading. A touch goes straight ahead,
+	   since it's about to open. */
+	let intent: ReturnType<typeof setTimeout> | undefined;
+
+	function hover(e: PointerEvent, photo: (typeof trip.photos)[number]) {
+		clearTimeout(intent);
+		const go = () => preload(srcset(trip, photo), sizes.viewer(photo));
+		if (e.pointerType === 'mouse') intent = setTimeout(go, 80);
+		else go();
+	}
 </script>
 
 <svelte:head>
@@ -26,7 +52,8 @@
 	<p>{trip.year} · {trip.photos.length} photos</p>
 </header>
 
-<!-- The grid stays mounted while a photo is open, so closing it keeps the scroll position. -->
+<!-- The grid stays mounted while a photo is open, so closing it keeps the scroll position. The
+     first few thumbnails load first, unless a photo is open over them (landing on its link). -->
 <ul class="grid">
 	{#each trip.photos as photo, i (photo.id)}
 		{@const flying = hero.hidden === photo.id}
@@ -34,9 +61,17 @@
 			<a
 				href="/{trip.slug}/{photo.id}"
 				data-sveltekit-reset="false"
-				onpointerenter={() => preload(srcset(trip, photo), sizes.viewer)}
+				onpointerenter={(e) => hover(e, photo)}
+				onpointerleave={() => clearTimeout(intent)}
 			>
-				<Photo class="thumb {flying ? 'flying' : ''}" {trip} {photo} sizes={sizes.thumb(photo)} eager={i < 6 || flying} />
+				<Photo
+					class="thumb {flying ? 'flying' : ''}"
+					{trip}
+					{photo}
+					sizes={sizes.thumb(photo)}
+					eager={i < 6 || flying}
+					fetchpriority={i < 4 && !page.params.photo ? 'high' : undefined}
+				/>
 				<span>{photo.title}</span>
 			</a>
 		</li>
@@ -86,8 +121,9 @@
 		min-width: 0;
 	}
 
+	/* Backwards only: hidden until its turn, and nothing left applied once it's done. */
 	li.enter {
-		animation: rise var(--spring-ui-duration) var(--spring-ui) both;
+		animation: rise var(--spring-ui-duration) var(--spring-ui) backwards;
 		animation-delay: calc(var(--i) * 30ms);
 	}
 

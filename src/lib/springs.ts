@@ -1,5 +1,3 @@
-import { spring as animeSpring } from 'animejs';
-
 /**
  * Spring physics baked into CSS `linear()` easings, so animations run on the
  * compositor (no JS per frame) while still feeling springy.
@@ -28,7 +26,7 @@ export function spring(response: number, damping: number) {
 }
 
 /** `[response, damping]` for each spring. */
-const params = {
+export const params = {
 	/** Photos moving between views. ~1% overshoot. */
 	hero: [0.38, 0.82],
 	/** Small UI movements: hovers, presses, captions, grid entrance. ~2% overshoot. */
@@ -37,23 +35,11 @@ const params = {
 	pop: [0.24, 0.62]
 } as const;
 
-type Name = keyof typeof params;
+export type Name = keyof typeof params;
 
 export const springs = Object.fromEntries(
 	Object.entries(params).map(([name, [response, damping]]) => [name, spring(response, damping)])
 ) as Record<Name, ReturnType<typeof spring>>;
-
-/**
- * The same spring as an anime.js ease, launched at `velocity`: the share of its distance it
- * covers per second, positive towards the target. anime.js uses SwiftUI's model too, so
- * `duration` is the response and `bounce` is one minus the damping.
- */
-export function launch(name: Name, velocity = 0) {
-	const [response, damping] = params[name];
-	const ease = animeSpring({ duration: response * 1000, bounce: 1 - damping });
-	ease.velocity = velocity;
-	return ease;
-}
 
 /** The springs as CSS custom properties, e.g. `var(--spring-hero)` and `var(--spring-hero-duration)`. */
 export const springCSS = `:root{${Object.entries(springs)

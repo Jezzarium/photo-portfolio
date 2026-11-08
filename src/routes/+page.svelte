@@ -19,7 +19,15 @@
 		{@const cover = trip.photos.find((p) => p.id === trip.cover) ?? trip.photos[0]}
 		<li>
 			<a href="/{trip.slug}">
-				<Photo class="frame" {trip} photo={cover} sizes={sizes.card(cover)} eager={i < 3} alt="" />
+				<Photo
+					class="frame"
+					{trip}
+					photo={cover}
+					sizes={sizes.card(cover)}
+					eager={i < 3}
+					fetchpriority={i < 3 ? 'high' : undefined}
+					alt=""
+				/>
 				<div class="meta">
 					<span class="name">{trip.name}</span>
 					<span class="year">{trip.year}</span>

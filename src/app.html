@@ -7,10 +7,15 @@
 		<meta name="color-scheme" content="light dark" />
 		<meta name="theme-color" media="(prefers-color-scheme: light)" content="#edece9" />
 		<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#0e0e0e" />
-		<link rel="preconnect" href="https://fonts.googleapis.com" />
-		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-		<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500&display=swap" />
-		<script>document.documentElement.classList.add('js');</script>
+		<!-- Photos come from R2: open the connection while the page is still arriving. -->
+		<link rel="preconnect" href="https://r2.jabourjailibilodeau.ca" />
+		<!-- Marks each image as loaded the moment it arrives (load events don't bubble, but they can
+		     be caught on the way down), so photos fade in one by one as they land rather than all at
+		     once when the page's script starts up. See Photo.svelte. -->
+		<script>
+			document.documentElement.classList.add('js');
+			document.addEventListener('load', (e) => e.target.tagName === 'IMG' && e.target.setAttribute('data-loaded', ''), true);
+		</script>
 		%sveltekit.head%
 	</head>
 	<body data-sveltekit-preload-data="hover">
